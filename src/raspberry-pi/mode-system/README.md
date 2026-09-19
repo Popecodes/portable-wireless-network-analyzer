@@ -38,5 +38,6 @@ scoped power-off command used by the device.
 ## v0.1 limitation
 
 Bruce Safe and Security Lab return to the selector when the right encoder is
-held for three seconds. The recovered main `pna.py` was not included with this
-bundle, so its corresponding right-hold behavior cannot be verified here.
+held for three seconds. The current main `pna.py` does not implement the same
+right-hold return behavior, so leaving PNA Analyzer still requires restarting
+the launcher service or rebooting.
