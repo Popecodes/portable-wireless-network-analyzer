@@ -1,0 +1,15 @@
+[Unit]
+Description=PNA V2 System Selector
+After=network.target
+
+[Service]
+Type=simple
+User=%i
+WorkingDirectory=%h/pna
+ExecStart=%h/pna/.venv/bin/python %h/pna/src/raspberry-pi/mode-system/launcher.py
+Restart=on-failure
+RestartSec=2
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
