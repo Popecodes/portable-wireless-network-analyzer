@@ -1,113 +1,82 @@
-# Portable Wireless Network Analyzer
+# Portable Wireless Network Analyzer (PNA V2)
 
-A handheld wireless diagnostic system built with a Raspberry Pi 4, ESP32-S3, and dedicated USB Wi-Fi monitor radio.
+A handheld, battery-powered network diagnostic instrument built with a **Raspberry Pi 4**, **ESP32-S3**, a dedicated USB Wi-Fi monitoring adapter, a **480 × 320 ST7796S SPI TFT**, and two rotary encoders.
 
-## Overview
+## Current capabilities
 
-This project is a portable wireless network analyzer designed to provide real-time Wi-Fi, Bluetooth Low Energy, RF, Ethernet, and signal diagnostics through a handheld interface.
+### Ethernet diagnostics and discovery
+- Detect wired interface status, IPv4 address, link speed and duplex, gateway, DNS resolution, and RX/TX errors.
+- Ping the gateway, test external connectivity when routed, and ping a chosen diagnostic target.
+- **SCAN LAN**: explicitly initiate a bounded ICMP sweep of the connected private IPv4 /24 subnet, with progress on the TFT. Discovery runs in a background worker to keep the interface responsive.
+- Scroll through discovered responsive IP addresses using the right rotary encoder.
+- **Device inspector**: view available IP, hostname, MAC address, latency, and results of checks for common TCP services (SSH, HTTP, HTTPS, SMB, RDP, and 8080).
 
-The project began as an ESP32-only prototype and evolved into a Raspberry Pi + ESP32 architecture with a larger display, dedicated wireless monitoring hardware, and expanded network analysis capabilities.
+**Discovery limitations:** hosts that block ICMP may not appear. Hostnames, MAC addresses, and port results depend on network configuration and device responses. Only scan networks you own or are authorized to assess.
 
-## Features
-
-- Wi-Fi access point scanning
-- Bluetooth Low Energy device scanning
-- Passive 2.4 GHz RF channel analysis
-- 5 GHz monitor-mode wireless analysis
-- RSSI and signal-strength visualization
-- Ethernet diagnostics
-- Real-time packet statistics
-- Rotary encoder navigation
-- 4-inch SPI TFT interface
-- Data logging
-- Portable battery-powered operation
+### Wireless and system
+- Wi-Fi access point scanning, signal-strength visualization, and channel statistics.
+- BLE scanning and passive 2.4 GHz RF activity observation through the ESP32-S3.
+- Dedicated USB Wi-Fi monitor radio for raw 802.11 observations, including supported 2.4 GHz and 5 GHz channels.
+- TFT status, signal, Ethernet, monitoring, and system pages.
+- Resilient logging and headless/SSH fallback.
 
 ## Hardware
 
-- Raspberry Pi 4
-- ESP32-S3
-- Netgear USB Wi-Fi adapter
-- 4-inch ST7796S 480x320 TFT display
-- Dual rotary encoders
-- External Wi-Fi antenna
-- Portable battery supply
+| Component | Purpose |
+| --- | --- |
+| Raspberry Pi 4 | Main Python application, display, Ethernet diagnostics, system monitoring |
+| ESP32-S3 | Wi-Fi/BLE/RF coprocessor over UART |
+| Netgear USB Wi-Fi adapter | Dedicated monitor-mode 802.11 radio |
+| ST7796S 480 × 320 SPI TFT | Local display |
+| Left rotary encoder | Navigate pages; click for home; hold 5 seconds for safe shutdown |
+| Right rotary encoder | Select entries, scan/ping Ethernet targets, inspect devices |
+| Portable 5 V battery supply | Mobile operation |
 
-## System Architecture
+### Interface connections
 
-### Raspberry Pi 4
-Handles:
+- TFT: SPI0 CE0 GPIO8, RESET GPIO24, DC GPIO25, MOSI GPIO10, SCK GPIO11.
+- Left encoder: CLK GPIO5, DT GPIO6, SW GPIO13.
+- Right encoder: CLK GPIO16, DT GPIO20, SW GPIO21.
+- ESP32-S3 to Pi: UART `/dev/serial0`, 115200 baud.
 
-- User interface
-- TFT display
-- Data processing
-- Ethernet diagnostics
-- System monitoring
-- Logging
-- USB Wi-Fi monitor-mode analysis
+## Firmware
 
-### ESP32-S3
-Handles:
+The active Raspberry Pi application is `pna.py`. It uses the companion `wifi_monitor_backend.py` for USB Wi-Fi monitoring and is run by `pna.service` on the Pi.
 
-- Wi-Fi scanning
-- BLE scanning
-- Passive 2.4 GHz RF activity measurement
-- Wireless data collection
+For the November 2026 device-inspector build, the tested source is named `pna_ethernet_device_inspector.py`. Once uploaded to this repository, it can be copied to `pna.py` on the Pi after backing up the existing file.
 
-### Netgear USB Wi-Fi Radio
-Handles:
+### Deploy on the Raspberry Pi
 
-- Dedicated monitor mode
-- Raw 802.11 frame observation
-- 2.4 GHz / 5 GHz wireless analysis
-- Packet and channel statistics
+```bash
+cd ~/pna
+cp -a pna.py "pna_backup_$(date +%Y%m%d_%H%M%S).py"
+python3 -m py_compile pna_ethernet_device_inspector.py
+cp pna_ethernet_device_inspector.py pna.py
+sudo systemctl restart pna.service
+sudo systemctl status pna.service --no-pager
+```
 
-## Communication
+Configure an optional fixed Ethernet target using the systemd service environment variable `PNA_ETH_TARGET` (IPv4 address).
 
-The ESP32-S3 communicates with the Raspberry Pi using UART.
+## PNA V2 Ethernet controls
 
-The Pi combines data from the ESP32, Ethernet interface, and dedicated USB Wi-Fi radio into one real-time interface.
+1. Navigate to **ETHERNET** with the left encoder.
+2. Rotate the right encoder to **SCAN LAN** and click to begin discovery.
+3. Wait for the scan to finish, then rotate through responsive hosts.
+4. Click a selected host to ping it.
+5. Hold the right encoder button for approximately one second to open the device inspector; click to return.
 
-## Project Evolution
+## Project evolution
 
-### V1
-ESP32-only handheld Wi-Fi analyzer with a small display and rotary encoder controls.
+**V1:** ESP32-only handheld Wi-Fi analyzer.
 
-### V2
-Raspberry Pi 4 + ESP32-S3 architecture with:
+**V2:** Raspberry Pi 4 + ESP32-S3, larger SPI TFT, USB monitor radio, BLE/RF/Wi-Fi pages, Ethernet diagnostics, interactive LAN discovery, and device inspection.
 
-- Larger TFT display
-- Wi-Fi scanning
-- BLE scanning
-- RF analysis
-- Ethernet diagnostics
-- Dedicated USB Wi-Fi monitor radio
-- Real-time system interface
+**Future:** custom PCB, Compute Module integration, 3D-printed enclosure, improved power management, and expanded diagnostics.
 
-### Future Development
+## Engineering skills demonstrated
 
-- Custom PCB
-- Raspberry Pi Compute Module integration
-- ESP32-S3 module integration
-- 3D-printed enclosure
-- Improved power management
-- Expanded wireless diagnostics
-
-## Skills Demonstrated
-
-- Electrical engineering
-- Embedded systems
-- Raspberry Pi
-- ESP32
-- Python
-- C++
-- Linux
-- UART
-- SPI
-- GPIO
-- Wireless networking
-- PCB design
-- Hardware debugging
-- System integration
+Embedded Python, C++, GPIO, SPI, UART, Linux/systemd, Ethernet and IP networking, wireless analysis, concurrent background tasks, hardware integration, and debugging.
 
 ## Author
 
